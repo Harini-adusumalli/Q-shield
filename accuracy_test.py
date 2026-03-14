@@ -1,63 +1,44 @@
 import requests
+import pandas as pd
 
 API_URL = "http://127.0.0.1:8000/scan"
 
-# --- EXPANDED TEST DATASET (20 URLs) ---
-test_data = [
-    # Safe / Whitelisted
-    ("https://google.com", True),
-    ("https://github.com", True),
-    ("https://apple.com", True),
-    ("https://microsoft.com", True),
-    ("https://stackoverflow.com", True),
-    ("https://linkedin.com", True),
-    ("https://flutter.dev", True),
-    ("https://python.org", True),
-    ("https://aws.amazon.com", True),
-    ("https://wikipedia.org", True),
+# 1. Define our test set (10 Safe, 10 Phishing)
+test_urls = [
+    # LEGITIMATE SITES
+    "https://google.com", "https://github.com", "https://linkedin.com", 
+    "https://stackoverflow.com", "https://apple.com", "https://microsoft.com",
+    "https://twitter.com", "https://nypost.com", "https://icicibank.com", "https://wikipedia.org",
     
-    # Phishing / Malicious
-    ("http://123.45.67.89/login-secure", False),
-    ("http://paypal-verification-update.com", False),
-    ("http://secure-amazon-account-check.xyz", False),
-    ("http://login.microsoftonline.security-verify.net", False),
-    ("http://bank-of-america-portal.com", False),
-    ("http://bit.ly/fake-login-123", False),
-    ("http://wellsfargo-secure-auth.org", False),
-    ("http://netflix-payment-update.shop", False),
-    ("http://facebook-login-help.xyz", False),
-    ("http://192.168.1.1/admin/login.php", False)
+    # SUSPICIOUS / PHISHING PATTERNS
+    "http://secure-login-amazon.com/verify", "http://123.45.67.89/login-secure",
+    "http://paypal-verification-update.com", "http://secure-amazon-account-check.xyz",
+    "http://bank-of-america-login-portal.com", "http://verify-bank-account-update.top",
+    "http://kienthuc.net.vn/news/update", "http://login-microsoft-security.net",
+    "http://secure-dropbox-share.info", "http://validation-needed-now.biz"
 ]
 
-def run_expanded_test():
-    print(f"🚀 Initializing Q-Shield Stress Test (N={len(test_data)})...")
-    print("-" * 60)
-    
-    correct = 0
-    
-    for url, expected_safe in test_data:
+def run_automated_demo():
+    print(f"🚀 Q-SHIELD BATCH TEST: Running {len(test_urls)} scans...\n")
+    print(f"{'URL':<45} | {'SAFE?':<6} | {'CONFIDENCE':<10} | {'LABEL'}")
+    print("-" * 80)
+
+    for url in test_urls:
         try:
-            response = requests.post(API_URL, json={"url": url})
-            data = response.json()
+            # We do NOT send raw_features so the backend uses its logic
+            payload = {"url": url}
+            res = requests.post(API_URL, json=payload).json()
             
-            actual_safe = data['is_safe']
-            conf = data['quantum_confidence']
+            is_safe = "YES" if res.get('is_safe') else "NO"
+            conf = res.get('quantum_confidence', '0.0%')
+            label = res.get('detected_label', 'Unknown')
             
-            is_correct = (actual_safe == expected_safe)
-            if is_correct: correct += 1
-            
-            status = "✅" if is_correct else "❌"
-            label = "SAFE" if actual_safe else "PHISH"
-            print(f"{status} [{label}] {url[:45]}... (Conf: {conf})")
+            # Truncate long URLs for the table
+            display_url = (url[:42] + '..') if len(url) > 44 else url
+            print(f"{display_url:<45} | {is_safe:<6} | {conf:<10} | {label}")
             
         except Exception as e:
-            print(f"⚠️ Error testing {url}: {e}")
-
-    accuracy = (correct / len(test_data)) * 100
-    print("-" * 60)
-    print(f"📊 FINAL STRESS TEST ACCURACY: {accuracy:.2f}%")
-    print(f"✅ Pass: {correct} | ❌ Fail: {len(test_data) - correct}")
-    print("-" * 60)
+            print(f"Error scanning {url}: {e}")
 
 if __name__ == "__main__":
-    run_expanded_test()
+    run_automated_demo()

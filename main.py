@@ -33,12 +33,12 @@ async def scan_url(request: ScanRequest):
             "url": request.url,
             "is_safe": result["is_safe"],
             "quantum_confidence": f"{confidence_pct}%",
-            "detected_label": result.get("label", "Unknown"),
+            # FIX: Change "label" to "threat_type" to match model.py
+            "detected_label": result.get("threat_type", "Unknown"),
             "status": "Success"
         }
     except Exception as e:
         return {"status": "Error", "message": str(e)}
-
 # This block ensures the server starts and STAYS running
 if __name__ == "__main__":
     print("🚀 Q-Shield Server Initializing...")
